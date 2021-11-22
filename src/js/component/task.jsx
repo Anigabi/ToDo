@@ -4,6 +4,11 @@ import PropTypes from "prop-types";
 const Task = props => {
 	return (
 		<li className="list-group-item d-flex d-flex justify-content-between align-items-center">
+			<button>
+				<i
+					className="far fa-check-square"
+					onClick={() => props.cross(props.task.label)}></i>
+			</button>
 			{props.label}
 			<button>
 				<i

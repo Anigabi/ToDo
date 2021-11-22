@@ -1,94 +1,101 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Task from "./task.jsx";
 
-const URL = "https://assets.breatheco.de/apis/fake/todos/user/anag";
-
 const Home = () => {
+	const INPUT = document.querySelector("input");
 	const [list, setList] = useState([]);
-	const [listOfComponents, setListOfComponents] = useState([]);
-	const [failOnUpdating, setFailOnUpdating] = useState("");
+	const [toDoList, setToDoList] = useState([]);
 	const [update, setUpdate] = useState(false);
 
 	useEffect(() => {
-		fetch(URL)
+		fetch("https://assets.breatheco.de/apis/fake/todos/user/anag", {
+			method: "GET"
+		})
 			.then(response => {
+				console.log(response);
 				if (response.ok) {
 					return response.json();
 				}
-				throw new Error("Fail on load");
+				throw new Error("Fail");
 			})
 			.then(responseAsJSON => {
-				setUpdate(false);
 				setList(responseAsJSON);
+				console.log(responseAsJSON);
 			})
 			.catch(error => {
-				setFailOnUpdating(error.message);
+				console.log(error);
 			});
 	}, []);
 
 	useEffect(() => {
-		if (list.lenght != 0) {
-			fetch(URL, {
-				method: "PUT",
-				body: JSON.stringify(list),
-				headers: {
-					"Content-Type": "application/json"
+		fetch("https://assets.breatheco.de/apis/fake/todos/user/anag", {
+			method: "PUT",
+			body: JSON.stringify(list),
+			headers: {
+				"Content-Type": "application/json"
+			}
+		})
+			.then(response => {
+				console.log(response);
+				if (response.ok) {
+					return response.json();
 				}
+				throw new Error("Failing updating list");
 			})
-				.then(response => {
-					if (response.ok) {
-						setUpdate(false);
-					} else {
-						throw new Error("Failing updating task List");
-					}
-				})
-				.catch(error => setFailOnUpdating(error.message));
-		}
+			.then(responseAsJSON => {
+				console.log(responseAsJSON);
+			})
+			.catch(error => {
+				console.log(error);
+			});
 	}, [update]);
 
 	useEffect(() => {
-		if (list.length != 0) {
-			setListOfComponents(
-				list.map((inputValue, index) => {
-					return (
-						<Task
-							key={index.toString()}
-							id={index.toString()}
-							label={inputValue.label}
-							delete={deleteTask}
-						/>
-					);
-				})
-			);
-		}
+		setToDoList(
+			list.map((tasks, index) => {
+				return (
+					<Task
+						label={tasks.label}
+						key={index.toString()}
+						id={index.toString()}
+						task={tasks}
+						delete={handleRemoveItem}
+						cross={crossItem}
+					/>
+				);
+			})
+		);
 	}, [list]);
 
-	const deleteTask = id => {
-		setList(list.filter((_, index) => index != id));
+	const handleRemoveItem = indexList => {
+		setList(list.filter((_, index) => index != indexList));
+	};
+
+	const crossItem = taskLabel => {
+		let updatedTasks = list.map(task => {
+			if (task.label == taskLabel) {
+				return { label: task.label, done: !task.done };
+			}
+			return task;
+		});
+		setList(updatedTasks);
 		setUpdate(true);
 	};
 
 	return (
 		<div className="ContainerToDo">
 			<div className="todoList">
-				{!failOnUpdating && <h1>{failOnUpdating}</h1>}
-				<h1>TO DO LIST</h1>
+				<h2>To Do List</h2>
 				<form
 					onSubmit={event => {
 						event.preventDefault();
 						setUpdate(true);
-						setList([
-							...list,
-							{
-								label: document.querySelector("input").value,
-								done: false
-							}
-						]);
-					}}
-					action="">
-					<input type="text" placeholder="add new task" />
+						setList([...list, { label: INPUT.value, done: false }]);
+						INPUT.value = "";
+					}}>
+					<input type="text" placeholder="Things to be done" />
 				</form>
-				<ul>{listOfComponents}</ul>
+				<ul>{toDoList}</ul>
 			</div>
 		</div>
 	);
